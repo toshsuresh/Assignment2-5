@@ -18,7 +18,6 @@ Open **http://127.0.0.1:8002**. Serve the folder over HTTP; double-clicking `ind
 - Black hat: a credible-looking editorial briefing using six cherry-picked OECD countries, an equal-weight index, a 2020 cutoff, a cropped index scale, and a causal headline.
 - Framing lab: three independent repairs, live original/current percentages, a fixed-scale comparison chart, and a detailed reveal. The cohort repair changes both the represented countries and aggregation method; it is not an isolated sampling experiment.
 - Page sections for sources, proposed extra credit, AI design evidence, and clearly marked write-up/teamwork/reflection placeholders.
-- GitHub Pages deployment workflow, including data regeneration and model checks.
 
 ## Data provenance
 
@@ -35,19 +34,9 @@ npm run prepare-data
 npm run check
 ```
 
-`scripts/prepare_data.py` validates every row and records the source SHA-256 in `data/emissions.json`. `model.mjs` contains the calculations. `app.mjs` renders SVG charts and binds controls. All data paths are relative to support GitHub Pages project URLs.
+`scripts/prepare_data.py` validates every row and records the source SHA-256 in `data/emissions.json`. `model.mjs` contains the calculations. `app.mjs` renders SVG charts and binds controls. All data paths are relative.
 
-## Publish on GitHub Pages
-
-The checkout’s origin is `git@github.com:toshsuresh/Assignment2-5.git`. Implementation is on `feat/emissions-perspectives`. No remote push or public deployment is claimed by this README.
-
-1. Finish the write-up placeholders in `index.html` and the AI reflection in `docs/ai-design-log.md`.
-2. Commit and push the site to the repository’s `main` branch, or merge the implementation branch into `main`.
-3. In GitHub → repository **Settings → Pages → Build and deployment**, choose **GitHub Actions**.
-4. The included **Verify and deploy GitHub Pages** workflow runs on pushes to `main`. You can also run it manually from Actions after enabling Pages.
-5. Use the deployment URL returned by the workflow. With the default project URL it should be `https://toshsuresh.github.io/Assignment2-5/`, but this URL must be verified after deployment.
-
-The workflow publishes only HTML, CSS, JavaScript modules, data, and the AI log. It does not expose the repository’s test tooling or Git metadata.
+Publishing is handled separately by the student. This repository has no automated deployment workflow.
 
 ## Remaining student submission work
 
