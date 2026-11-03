@@ -51,7 +51,7 @@ This is AI self-critique, not participant evidence.
 
 ## Verification performed
 
-The data-preparation script validates dimensions, unique area/year keys, units, and status flags. Model tests cover missingness, indexing, cohort selection, ranking, CSV quoting, and the independent repair states. Browser QA checks desktop/mobile rendering and actual controls. Exact verification results are in the README; these checks validate behavior, not persuasive effectiveness.
+The data-preparation script validates dimensions, unique area/year keys, units, and status flags. Model tests cover missingness, indexing, cohort selection, ranking, CSV quoting, and the independent repair states. All seven model tests pass with `npm run check`. Browser QA checks desktop/mobile rendering and actual controls. These checks validate behavior, not persuasive effectiveness.
 
 ## Reflection to complete by the student
 

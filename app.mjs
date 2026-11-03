@@ -229,7 +229,7 @@ async function init() {
   } catch (error) {
     $('#load-status').hidden = false;
     $('#load-status').classList.add('error');
-    $('#load-status').textContent = `The dataset could not be loaded. Serve this folder over HTTP (see README), then reload. ${error.message}`;
+    $('#load-status').textContent = `The dataset could not be loaded. Run npm start in the project folder, then open http://127.0.0.1:8002 and reload. ${error.message}`;
     console.error(error);
   }
 }
