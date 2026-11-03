@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="White hat and black hat visualizations of OECD greenhouse gas emissions for CMSC471 Assignment 2.">
+  <title>Greenhouse Gas Emissions — Assignment 2</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="#">CMSC471 · Assignment 2</a>
+    <nav aria-label="Main navigation"><a href="#white-hat">White hat</a><a href="#black-hat">Black hat</a><a href="#framing-lab">Compare choices</a><a href="#notes">Write-ups & sources</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap">
+      <h1>Greenhouse Gas Emissions</h1>
+      <p>White hat and black hat visualizations using OECD data.</p>
+    </section>
+    <div class="reading-note wrap"><p><strong>A note on the data.</strong> The supplied export covers 2015–2024, rather than the assignment’s historical 1990–2018 label. It contains total greenhouse gases per person, excluding land use, land-use change and forestry (LULUCF).</p><a href="#sources">Data source</a></div>
+
+    <section id="white-hat" class="section wrap">
+      <div class="section-heading"><div><h2>White hat: emissions per person</h2><p>Compare countries over time. Missing observations and estimated values are shown explicitly.</p></div></div>
+      <div id="load-status" class="load-status" role="status">Loading the OECD export…</div>
+      <div id="explorer" hidden>
+        <div class="metrics"><article><p>OECD · <span class="end-year">2024</span></p><div><strong id="metric-value">—</strong><span>t CO₂e / person</span></div><small>Published OECD aggregate <span class="estimate-label">· estimated</span></small></article><article><p>OECD change · <span id="metric-period">2015–2024</span></p><div><strong id="metric-change">—</strong><span>per person</span></div><small>Relative to the selected start year</small></article><article><p>Coverage · <span class="end-year">2024</span></p><div><strong id="metric-coverage">—</strong><span>countries / territories</span></div><small>Of 89 in this export · missing ≠ zero</small></article></div>
+        <div class="chart-card">
+          <div class="chart-heading"><div><h3>Emissions over time</h3><p id="white-chart-description">Annual greenhouse gas emissions · tonnes CO₂e per person</p></div><div class="segmented" role="group" aria-label="Chart measure"><button id="absolute-button" aria-pressed="true">Per person</button><button id="indexed-button" aria-pressed="false">Change since start</button></div></div>
+          <div class="toolbar"><div class="year-controls"><label>From <select id="start-year" aria-label="Start year"></select></label><span aria-hidden="true">—</span><label>To <select id="end-year" aria-label="End year"></select></label></div><div class="chart-actions"><button id="choose-countries" class="quiet-button" aria-expanded="false" aria-controls="country-picker">＋ Compare areas</button><button id="reset-white" class="quiet-button">Reset</button></div></div>
+          <div id="country-picker" class="country-picker" hidden><div class="picker-top"><label for="country-search">Choose up to six countries or aggregates</label><input id="country-search" type="search" placeholder="Search reference areas…"></div><div id="country-options" class="country-options"></div><p id="selection-feedback" role="status">Select one to six areas. Regional aggregates are labeled.</p></div>
+          <div id="white-chart" class="chart-container"></div>
+          <div id="white-legend" class="legend" aria-label="Chart legend"></div>
+          <div class="chart-foot"><p><span class="legend-hollow" aria-hidden="true"></span>Hollow points = estimated values. Gaps = unavailable observations.</p><p>Hover or focus a point for details · zero-based vertical scale</p></div>
+        </div>
+        <div class="snapshot-card"><div class="chart-heading"><div><h3>Country comparison</h3><p>Available countries and territories in this export; this is not a complete global ranking.</p></div><label class="snapshot-year-label">Snapshot year <select id="snapshot-year" aria-label="Snapshot year"></select></label></div><div class="snapshot-toolbar"><input id="snapshot-search" type="search" aria-label="Search countries in snapshot" placeholder="Search countries…"><label>Sort by <select id="snapshot-sort"><option value="high">Highest emissions</option><option value="low">Lowest emissions</option><option value="change">Largest decrease since start</option></select></label><button id="download-snapshot" class="quiet-button">↓ Download this table</button></div><div class="table-scroll"><table><caption id="table-caption" class="sr-only">Country emissions snapshot</caption><thead><tr><th scope="col">Country / territory</th><th scope="col">t CO₂e per person</th><th scope="col" id="change-column">Change from 2015</th><th scope="col"><span class="sr-only">Add to trend chart</span></th></tr></thead><tbody id="snapshot-body"></tbody></table></div><div class="table-footer"><p id="table-coverage"></p><button class="quiet-button" id="show-all">Show all countries ↓</button></div></div>
+        <details class="methodology"><summary>Data and calculations <span>＋</span></summary><div class="method-grid"><article><h4>One measure, consistent units</h4><p>Annual greenhouse gases (GHG), total excluding LULUCF. The file specifies kilograms CO₂-equivalent per person with a multiplier of 10³. We display tonnes per person: raw value × 1,000 kg ÷ 1,000 kg/t. Numeric values are unchanged.</p></article><article><h4>Comparisons you can reproduce</h4><p>Change = (end ÷ start − 1) × 100. Indexed values = year ÷ selected start × 100. If the start value is unavailable, the index is unavailable. Absolute and indexed trend axes start at zero. No missing values are filled or carried forward.</p></article><article><h4>Coverage and aggregation</h4><p>The export includes 89 countries/territories and five regional aggregates. Aggregates are excluded from country rankings. The OECD line is the published aggregate, not an average of the countries selected here. A per-person decline does not establish a decline in total emissions.</p></article><article><h4>Limits to the claim</h4><p>These inventories do not measure a full consumption footprint or establish why emissions changed. Reporting years differ. Forty of the 792 observations are marked estimated, including the OECD series. The filtered export has no sector or individual-gas breakdown.</p></article></div></details>
+      </div>
+    </section>
+
+    <section id="black-hat" class="black-section"><div class="wrap"><div class="section-heading"><div><h2>Black hat: a selective view</h2><p>This chart uses selective data and presentation choices. Use the controls below to see their effects.</p></div></div>
+      <article class="briefing"><div class="briefing-masthead"><span>Selected OECD countries</span><span id="brief-period">2015–2020</span></div><div class="briefing-intro"><div><h3 id="brief-headline">Emissions are falling.<br>The transition is working.</h3><p id="brief-deck">Emissions fell by nearly a quarter across six OECD economies.</p></div><div class="brief-stat"><span id="story-change">—</span><strong id="story-stat-label">lower emissions</strong><p id="story-stat-note">Average change across six economies<br>2015–2020 · per person</p></div></div><div class="brief-chart-top"><h4 id="story-chart-title">Emissions index</h4><span>EMISSIONS INDEX · 2015 = 100</span></div><div id="story-chart" class="chart-container"></div><div class="brief-chart-bottom"><p id="story-cohort">Selected economies · equal-weight index</p><span><i class="story-swatch"></i><span id="story-line-label">Progress index</span></span></div><div class="briefing-footer"><span>Source: OECD greenhouse gas inventories · selected series</span><a href="#framing-lab" id="inspect-framing">See how this chart was made</a></div></article>
+    </div></section>
+
+    <section id="framing-lab" class="section wrap framing-section"><div class="section-heading"><div><h2>Compare the design choices</h2><p>Each control updates the black hat chart. The smaller chart keeps both versions on the same scale.</p></div><button id="reset-story" class="quiet-button">Reset choices</button></div><div class="lab-layout"><div class="lab-controls"><label class="repair"><input id="repair-cohort" type="checkbox"><span class="switch" aria-hidden="true"></span><span><strong>Use the OECD aggregate</strong><small>Replace the six-country average with the published OECD value.</small></span></label><label class="repair"><input id="repair-time" type="checkbox"><span class="switch" aria-hidden="true"></span><span><strong>Include 2021–2024</strong><small>Continue to 2024, including the 2021 rebound hidden by the cutoff.</small></span></label><label class="repair"><input id="repair-axis" type="checkbox"><span class="switch" aria-hidden="true"></span><span><strong>Start the axis at zero</strong><small>Start the index axis at zero instead of 70. The numbers stay the same.</small></span></label></div><aside class="lab-readout"><h3>Change since 2015</h3><div><strong id="lab-original">—</strong><span>original chart</span><span class="readout-arrow" aria-hidden="true">→</span><strong id="lab-current">—</strong><span>current settings</span></div><p id="lab-explanation" aria-live="polite"></p><a class="text-link" href="#black-hat">Back to the black hat chart</a></aside></div><div id="lab-mini-chart" class="lab-mini-chart" aria-label="Live comparison of the two framings"></div><details class="audit" id="audit"><summary>Why the original chart is misleading <span>＋</span></summary><div class="audit-grid"><article><h4>Selected countries</h4><p>Estonia, the United Kingdom, Luxembourg, Greece, Germany and Spain are the six OECD member countries with the largest per-person reductions between 2015 and 2020 in this export. An equal-weight average of their indexed series makes this exceptional group look representative. It gives Estonia the same influence as Germany.</p></article><article><h4>Time range and scale</h4><p>The briefing ends in 2020, concealing the subsequent rebound and later trajectory. The index axis begins at 70, making a roughly one-quarter decline occupy most of the plot. The ticks are real, but the visual emphasis is selective. The lab isolates the scale effect without changing a single value.</p></article><article><h4>Title and labels</h4><p>“The transition is working” implies a cause that this dataset cannot establish. “Lower emissions” blurs the distinction between per-person emissions and totals. Repaired controls replace the headline and labels with a descriptive statement.</p></article></div><p class="audit-caveat"><strong>Even a repaired chart has limits.</strong> The OECD aggregate is not the world. Later observations can be estimates. Neither series proves a policy effect or a fall in total emissions.</p></details></section>
+
+    <section id="notes" class="notes-section"><div class="wrap">
+      <div class="section-heading"><div><h2>Write-ups</h2><p>Placeholders to complete before submission.</p></div></div>
+      <div class="notes-grid">
+        <article class="note-card"><h3>White hat write-up</h3><p>[Add 200–500 words about the dataset, design choices, and accuracy.]</p></article>
+        <article class="note-card"><h3>Black hat write-up</h3><p>[Add 200–500 words explaining the misleading techniques and their effects.]</p></article>
+        <article class="note-card"><h3>Development process</h3><p>[Add team members, contributions, people-hours, and what took the most time.]</p></article>
+        <article class="note-card"><h3>AI use</h3><p>[Add your reflection on AI-assisted design exploration and implementation.]</p><p><a href="docs/ai-design-log.md">Design exploration notes</a> — alternatives considered and reasons for the comparison controls. No runtime AI calls.</p></article>
+      </div>
+      <details class="extra-credit"><summary>Extra credit notes <span>＋</span></summary><p>The comparison controls and AI design exploration are candidates for extra credit. [Add your evaluation and Canvas declaration.]</p></details>
+      <div id="sources" class="sources"><div><h2>Data source</h2></div><div>
+        <a href="https://data-explorer.oecd.org/vis?df%5Bag%5D=OECD.ENV.EPI&df%5Bid%5D=DSD_AIR_GHG%40DF_AIR_GHG&df%5Bds%5D=dsDisseminateFinalDMZ" target="_blank" rel="noreferrer">OECD — Greenhouse gas emissions inventories</a>
+        <p>Supplied CSV exported November 1, 2026. 792 observations, 94 reference areas, 2015–2024. Measure: total greenhouse gases per person, excluding LULUCF.</p>
+        <p><a href="data/oecd-ghg-original.csv" download>Original CSV</a> · <a href="data/emissions.json" download>Prepared JSON</a></p>
+        <p><a href="https://www.oecd.org/en/blogs/2024/06/understanding-datasets-on-greenhouse-gas-emissions.html" target="_blank" rel="noreferrer">OECD dataset methodology</a></p>
+        <p>Charts implemented for this assignment; no visualization template was adapted.</p>
+      </div></div>
+    </div></section>
+  </main>
+  <footer class="site-footer wrap"><span>CMSC471 · Assignment 2</span><a href="#">Back to top</a></footer>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <noscript><p class="noscript">Enable JavaScript to explore the interactive visualizations. The original CSV remains available in the sources section.</p></noscript>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "ghg-visualization-assignment",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CMSC471 Assignment 2 \u2014 white hat and black hat OECD emissions visualizations",
+  "scripts": {
+    "start": "python3 -m http.server 8002 --bind 127.0.0.1",
+    "prepare-data": "python3 scripts/prepare_data.py",
+    "test": "node --test scripts/model.test.mjs",
+    "check": "node --check app.mjs && node --check model.mjs && npm test"
+  }
+}

@@ -1,0 +1,48 @@
+name: Verify and deploy GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate source and model
+        run: |
+          python3 scripts/prepare_data.py
+          git diff --exit-code -- data/emissions.json
+          npm run check
+      - name: Stage only public site assets
+        run: |
+          mkdir -p _site/data _site/docs
+          cp index.html styles.css app.mjs model.mjs .nojekyll _site/
+          cp data/emissions.json data/oecd-ghg-original.csv _site/data/
+          cp docs/ai-design-log.md _site/docs/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4
