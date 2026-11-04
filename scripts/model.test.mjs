@@ -62,6 +62,20 @@ test('the framing repairs isolate cohort, time window, and scale', () => {
   }
 });
 
+test('no framing draws a value below its axis floor', () => {
+  for (const benchmark of [false, true]) for (const extended of [false, true]) for (const zero of [false, true]) {
+    const s = story(data, {benchmark, extended, zero});
+    assert.ok(s.points.every(p => p.value >= s.domain[0] && p.value <= s.domain[1]));
+  }
+  assert.equal(story(data, {extended: true}).domain[0], 60);
+  assert.equal(story(data, {benchmark: true, extended: true}).domain[0], 70);
+});
+
+test('a snapshot year before the start year has no change value', () => {
+  assert.ok(snapshot(data, 2018, 2020).every(a => a.change === null));
+  assert.ok(snapshot(data, 2020, 2020).some(a => a.change === 0));
+});
+
 test('rankings exclude aggregates, sort numeric values, preserve missing rows, and search', () => {
   const high = snapshot(data, 2024, 2015);
   assert.equal(high.length, 89);

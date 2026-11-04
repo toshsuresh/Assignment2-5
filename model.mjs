@@ -19,11 +19,14 @@ export function story(data, {benchmark = false, extended = false, zero = false} 
   const lines = areas.map(a => series(a, start, end, true));
   const points = yearsBetween(start, end).map((year, i) => ({year, value: mean(lines.map(line => line[i].value).filter(v => v != null)), estimated: areas.some(a => a.values[year]?.estimated)}));
   const change = points.at(-1).value - 100;
-  return {areas, points, start, end, change, domain: [zero ? 0 : 70, 105], benchmark, extended, zero};
+  // The original floor is 70. It only moves down when a value would otherwise fall below the axis.
+  const lowest = Math.min(...points.map(p => p.value));
+  const floor = zero ? 0 : Math.min(70, Math.floor(lowest / 10) * 10);
+  return {areas, points, start, end, change, domain: [floor, 105], benchmark, extended, zero};
 }
 
 export function snapshot(data, year, baseline, query = '', sort = 'high') {
-  return data.areas.filter(a => !a.aggregate && a.name.toLowerCase().includes(query.toLowerCase())).map(a => ({...a, value: a.values[year]?.value ?? null, estimated: a.values[year]?.estimated ?? false, change: percentChange(a.values[baseline]?.value, a.values[year]?.value)})).sort((a, b) => {
+  return data.areas.filter(a => !a.aggregate && a.name.toLowerCase().includes(query.toLowerCase())).map(a => ({...a, value: a.values[year]?.value ?? null, estimated: a.values[year]?.estimated ?? false, change: year < baseline ? null : percentChange(a.values[baseline]?.value, a.values[year]?.value)})).sort((a, b) => {
     const av = sort === 'change' ? a.change : a.value;
     const bv = sort === 'change' ? b.change : b.value;
     if (av == null) return bv == null ? a.name.localeCompare(b.name) : 1;

@@ -59,6 +59,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; }
 .legend-line { width: 20px; height: 3px; display: inline-block; }
 .legend small { color: var(--muted); font-size: 10px; }
+.chart-notice { margin: 0 22px 14px; padding: 8px 12px; background: #f2f5f7; border-left: 3px solid #809bad; font-size: 12px; color: var(--ink); }
 .chart-foot { display: flex; justify-content: space-between; gap: 15px; padding: 12px 22px; border-top: 1px solid var(--line); font-size: 11px; }
 .chart-foot p { display: flex; align-items: center; gap: 7px; }
 .legend-hollow { width: 8px; height: 8px; border: 1px solid #717c84; border-radius: 50%; flex-shrink: 0; }

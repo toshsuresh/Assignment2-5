@@ -31,11 +31,12 @@ const hideTooltip = () => { $('#tooltip').hidden = true; };
 addEventListener('scroll', hideTooltip, {passive: true});
 addEventListener('keydown', event => { if (event.key === 'Escape') { hideTooltip(); $('#country-picker').hidden = true; $('#choose-countries').setAttribute('aria-expanded', 'false'); } });
 
-function drawChart(container, groups, {start, end, domain, unit, title, description, indexed = false, filled = false, mini = false} = {}) {
+function drawChart(container, groups, {start, end, domain, unit, title, description, indexed = false, filled = false, mini = false, annotate = false, directLabels = false} = {}) {
   const width = Math.max(container.clientWidth - (mini ? 0 : container.id === 'story-chart' ? 0 : innerWidth <= 760 ? 10 : 40), 260);
   const mobile = width < 550;
   const height = mini ? (mobile ? 210 : 215) : filled ? (mobile ? 255 : 285) : (mobile ? 330 : 350);
-  const margin = {top: 42, right: mobile ? 18 : 27, bottom: 36, left: mobile ? 38 : 50};
+  const labelLines = directLabels && !mobile;
+  const margin = {top: 42, right: labelLines ? 125 : mobile ? 18 : 27, bottom: 36, left: mobile ? 38 : 50};
   const x = year => margin.left + (year - start) / (end - start) * (width - margin.left - margin.right);
   const y = value => height - margin.bottom - (value - domain[0]) / (domain[1] - domain[0]) * (height - margin.top - margin.bottom);
   const id = `chart-${++chartCount}`;
@@ -58,6 +59,11 @@ function drawChart(container, groups, {start, end, domain, unit, title, descript
     if (mobile && end - start > 6 && (year - start) % 2 && year !== end) continue;
     if (mobile && end - start > 6 && year === end - 1 && (year - start) % 2 === 0) continue;
     svg.append(svgElement('text', {x: x(year), y: height - 10, 'text-anchor': 'middle', fill: inkColor, 'font-size': mobile ? 9 : 10}, year));
+  }
+  if (annotate && start <= 2020 && end >= 2020) {
+    const px = x(2020);
+    svg.append(svgElement('line', {x1: px, x2: px, y1: margin.top - 4, y2: height - margin.bottom, stroke: '#9aa4aa', 'stroke-dasharray': '2 3'}));
+    svg.append(svgElement('text', {x: px, y: margin.top - 8, 'text-anchor': px < width * .3 ? 'start' : px > width * .7 ? 'end' : 'middle', fill: inkColor, 'font-size': mobile ? 9 : 10}, '2020: first COVID-19 pandemic year'));
   }
   for (const group of groups) {
     let segments = [], segment = [];
@@ -88,6 +94,14 @@ function drawChart(container, groups, {start, end, domain, unit, title, descript
       svg.append(circle);
     }
   }
+  if (labelLines) {
+    const labels = groups.map(group => {
+      const last = group.points.filter(p => p.value != null).at(-1);
+      return last && {text: group.name.split(' (')[0], color: group.color, x: x(last.year) + 9, y: y(last.value) + (last.year < end ? -9 : 4)};
+    }).filter(Boolean).sort((a, b) => a.y - b.y);
+    labels.forEach((label, i) => { if (i && label.y < labels[i - 1].y + 13) label.y = labels[i - 1].y + 13; });
+    for (const label of labels) svg.append(svgElement('text', {x: label.x, y: label.y, fill: label.color, stroke: '#fff', 'stroke-width': 3, 'paint-order': 'stroke', 'font-size': 11, 'font-weight': 600}, label.text));
+  }
   container.replaceChildren(svg);
 }
 
@@ -110,14 +124,18 @@ function renderWhite() {
   $('.estimate-label').hidden = !observation?.estimated;
   $('#absolute-button').setAttribute('aria-pressed', !state.indexed);
   $('#indexed-button').setAttribute('aria-pressed', state.indexed);
+  $('#white-chart-title').textContent = state.indexed ? `Change in emissions per person since ${state.start}` : `Greenhouse gas emissions per person, ${state.start} to ${state.end}`;
   $('#white-chart-description').textContent = state.indexed ? `Each area indexed to ${state.start} = 100 · proportional change, not total emissions` : 'Annual greenhouse gas emissions · tonnes CO₂e per person';
   const groups = state.selected.map((code, i) => ({code, name: area(code).name, color: COLORS[i], points: series(area(code), state.start, state.end, state.indexed)}));
   const max = Math.max(1, ...groups.flatMap(g => g.points.map(p => p.value ?? 0)));
-  const rawStep = max / 4;
+  const rawStep = max / 5;
   const power = 10 ** Math.floor(Math.log10(rawStep));
   const step = [1, 2, 2.5, 5, 10].map(n => n * power).find(n => n >= rawStep);
   const upper = Math.ceil(max / step) * step;
-  drawChart($('#white-chart'), groups, {start: state.start, end: state.end, domain: [0, upper], unit: state.indexed ? `Index · ${state.start} = 100` : 'Tonnes CO₂e per person', title: 'Country emissions over time', description: `Comparison of ${groups.map(g => g.name).join(', ')} from ${state.start} to ${state.end}. Zero-based scale. Missing data is shown as gaps; estimated values use hollow points.`, indexed: state.indexed});
+  drawChart($('#white-chart'), groups, {start: state.start, end: state.end, domain: [0, upper], unit: state.indexed ? `Index · ${state.start} = 100` : 'Tonnes CO₂e per person', title: 'Country emissions over time', description: `Comparison of ${groups.map(g => g.name).join(', ')} from ${state.start} to ${state.end}. Zero-based scale. Missing data is shown as gaps; estimated values use hollow points.`, indexed: state.indexed, annotate: true, directLabels: true});
+  const blank = groups.filter(g => g.points.every(p => p.value == null)).map(g => g.name);
+  $('#white-notice').hidden = !blank.length;
+  $('#white-notice').textContent = !blank.length ? '' : state.indexed ? `No line for ${blank.join(', ')}: no ${state.start} value to index from. Choose a later start year or switch to Per person.` : `No line for ${blank.join(', ')}: no data from ${state.start} to ${state.end}.`;
   $('#white-legend').innerHTML = groups.map(g => `<span class="legend-item"><i class="legend-line" style="background:${g.color}"></i>${escape(g.name)}${area(g.code).aggregate ? '<small>(aggregate)</small>' : ''}</span>`).join('');
   renderPicker(); renderTable();
 }
@@ -144,10 +162,10 @@ function renderTable() {
   const shown = state.all ? rows : rows.slice(0, 12);
   const max = Math.max(1, ...data.areas.filter(a => !a.aggregate).map(a => a.values[state.snapshotYear]?.value ?? 0));
   $('#change-column').textContent = `Change from ${state.start}`;
-  $('#table-caption').textContent = `${state.snapshotYear} greenhouse gas emissions per person, with percentage change from ${state.start}. Estimated values are labeled E. A dash means unavailable.`;
+  $('#table-caption').textContent = `${state.snapshotYear} greenhouse gas emissions per person, with percentage change from ${state.start}. A dash means unavailable.`;
   $('#snapshot-body').innerHTML = shown.map(a => `<tr class="${state.selected.includes(a.code) ? 'selected' : ''}"><td>${escape(a.name)}<span class="country-code">${a.code}</span></td><td>${a.value == null ? '<span class="no-data">— unavailable</span>' : `<div class="bar-value"><span class="bar-track" aria-hidden="true"><i class="bar-fill" style="width:${a.value / max * 100}%"></i></span><span>${fmt(a.value)}${a.estimated ? ' <abbr title="Estimated value">E</abbr>' : ''}</span></div>`}</td><td class="${a.change == null ? 'no-data' : a.change <= 0 ? 'down' : 'up'}">${pct(a.change)}</td><td><button class="table-compare" data-code="${a.code}" aria-label="${state.selected.includes(a.code) ? 'Remove' : 'Compare'} ${escape(a.name)}${state.selected.includes(a.code) ? '' : ' in trend chart'}" aria-pressed="${state.selected.includes(a.code)}">${state.selected.includes(a.code) ? '✓' : '+'}</button></td></tr>`).join('') || '<tr><td colspan="4">No countries match this search.</td></tr>';
   const n = rows.filter(a => a.value != null).length;
-  $('#table-coverage').textContent = `${n} of ${rows.length} ${state.query ? 'matching ' : ''}countries have data for ${state.snapshotYear}. Showing ${shown.length} rows.`;
+  $('#table-coverage').textContent = `${n} of ${rows.length} ${state.query ? 'matching ' : ''}countries have data for ${state.snapshotYear}. Showing ${shown.length} rows.${state.snapshotYear < state.start ? ' Change is blank because the snapshot year is before the start year.' : ''}`;
   $('#show-all').textContent = state.all ? 'Show fewer ↑' : `Show all ${rows.length} countries ↓`;
   $('#show-all').hidden = rows.length <= 12;
   $('#snapshot-body').querySelectorAll('button').forEach(button => button.addEventListener('click', () => toggleSelection(button.dataset.code)));
@@ -156,18 +174,20 @@ function renderTable() {
 function renderStory() {
   hideTooltip();
   const options = {benchmark: $('#repair-cohort').checked, extended: $('#repair-time').checked, zero: $('#repair-axis').checked};
+  const descriptive = $('#repair-labels').checked;
   const original = story(data), current = story(data, options);
-  const repaired = Object.values(options).some(Boolean);
+  const repaired = descriptive || Object.values(options).some(Boolean);
   $('#story-change').textContent = `${fmt(Math.abs(current.change), 1)}%`;
-  $('#story-stat-label').textContent = repaired ? `${current.change <= 0 ? 'lower' : 'higher'} emissions per person` : 'lower emissions';
+  $('#story-stat-label').textContent = descriptive ? `${current.change <= 0 ? 'lower' : 'higher'} emissions per person` : 'lower emissions';
   $('#story-stat-note').innerHTML = `${options.benchmark ? 'Published OECD aggregate' : 'Equal-weight average · six economies'}<br>2015–${current.end} · per person`;
   $('#brief-period').textContent = `2015–${current.end}`;
-  $('#brief-headline').innerHTML = repaired ? `Emissions per person, 2015–${current.end}` : 'Emissions are falling.<br>The transition is working.';
-  $('#brief-deck').textContent = repaired ? `${options.benchmark ? 'The OECD aggregate' : 'The six selected countries'} shows a ${fmt(Math.abs(current.change), 1)}% ${current.change < 0 ? 'decline' : 'increase'} since 2015. This trend alone does not explain its cause.` : 'Emissions fell by nearly a quarter across six OECD economies.';
-  $('#story-chart-title').textContent = repaired ? `An indexed comparison, 2015–${current.end}.` : 'Emissions index';
+  const cohortName = options.benchmark ? 'the OECD' : 'six OECD economies';
+  $('#brief-headline').innerHTML = descriptive ? `Emissions per person, 2015–${current.end}` : 'Emissions are falling.<br>The transition is working.';
+  $('#brief-deck').textContent = descriptive ? `${options.benchmark ? 'The OECD aggregate shows' : 'The six selected countries show'} a ${fmt(Math.abs(current.change), 1)}% ${current.change < 0 ? 'decline' : 'increase'} since 2015. This trend alone does not explain its cause.` : !options.benchmark && !options.extended ? 'Emissions fell by nearly a quarter across six OECD economies.' : `Emissions fell by ${fmt(Math.abs(current.change), 1)}% across ${cohortName}.`;
+  $('#story-chart-title').textContent = descriptive ? `Indexed emissions per person, 2015–${current.end}` : 'Emissions index';
   $('#story-cohort').textContent = options.benchmark ? 'Published OECD aggregate · all values marked estimated in this export' : `${current.areas.map(a => a.name).join(' · ')} · equal-weight index`;
-  $('#story-line-label').textContent = options.benchmark ? 'OECD index' : 'Progress index';
-  drawChart($('#story-chart'), [{name: options.benchmark ? 'OECD aggregate' : 'Six-country mean index', color: '#4e7956', points: current.points}], {start: current.start, end: current.end, domain: current.domain, unit: 'Index · 2015 = 100', indexed: true, filled: true, title: 'Selected countries: indexed emissions', description: `${options.benchmark ? 'Published OECD aggregate' : 'Equal-weight mean of six selected countries'}, 2015–${current.end}. Vertical scale begins at ${current.domain[0]}. Per-person emissions changed ${pct(current.change)}.`});
+  $('#story-line-label').textContent = !descriptive ? 'Progress index' : options.benchmark ? 'OECD index' : 'Six-country index';
+  drawChart($('#story-chart'), [{name: options.benchmark ? 'OECD aggregate' : 'Six-country mean index', color: '#4e7956', points: current.points}], {start: current.start, end: current.end, domain: current.domain, unit: 'Index · 2015 = 100', indexed: true, filled: true, title: 'Emissions index', description: `${options.benchmark ? 'Published OECD aggregate' : 'Equal-weight mean of six selected countries'}, 2015–${current.end}. Vertical scale begins at ${current.domain[0]}. Per-person emissions changed ${pct(current.change)}.`});
   $('#lab-original').textContent = pct(original.change);
   $('#lab-current').textContent = pct(current.change);
   const explanation = [];
@@ -175,7 +195,9 @@ function renderStory() {
   else explanation.push(`The six-country selection shows a ${fmt(Math.abs(current.change), 1)}% decline through ${current.end}; it is not representative of every country.`);
   if (options.extended) explanation.push('The line now includes 2021’s rebound and the later trajectory.');
   if (options.zero) explanation.push('A zero baseline reduces the visual size of the drop without altering the percentage.');
-  if (!repaired) explanation.push('All three original framing choices are active. Switch on a repair to isolate its effect.');
+  else if (current.domain[0] !== 70) explanation.push(`The axis now starts at ${current.domain[0]} because the 2024 value is below 70.`);
+  if (descriptive) explanation.push('Descriptive wording replaces the causal headline and the progress label. The data stays the same.');
+  if (!repaired) explanation.push('All four original choices are active. Switch on a control to isolate its effect.');
   $('#lab-explanation').textContent = explanation.join(' ');
   $('#lab-mini-chart').innerHTML = '<div class="mini-legend"><span><i></i>Original chart · ends 2020</span><span><i></i>Current settings</span></div><div id="mini-chart-inner"></div>';
   drawChart($('#mini-chart-inner'), [{name: 'Original six-country chart', color: '#c09867', dashed: true, points: original.points}, {name: options.benchmark ? 'Current OECD framing' : 'Current six-country framing', color: '#247767', points: current.points}], {start: 2015, end: 2024, domain: [0, 110], unit: 'Index · 2015 = 100 · shared zero baseline', title: 'Original and updated charts on the same scale', description: `Both lines use the same zero-based axis. The original chart ends at 2020. The current line ends at ${current.end}. When settings match, lines overlap.`, indexed: true, mini: true});
@@ -210,9 +232,8 @@ function bindControls() {
     $('#snapshot-year').value = 2022; $('#snapshot-search').value = ''; $('#snapshot-sort').value = 'high'; $('#country-search').value = ''; $('#country-picker').hidden = true; $('#choose-countries').setAttribute('aria-expanded', 'false'); $('#selection-feedback').textContent = 'Select one to six areas. Regional aggregates are labeled.';
     renderWhite();
   });
-  for (const id of ['repair-cohort', 'repair-time', 'repair-axis']) $(`#${id}`).addEventListener('change', renderStory);
-  $('#reset-story').addEventListener('click', () => { for (const id of ['repair-cohort', 'repair-time', 'repair-axis']) $(`#${id}`).checked = false; renderStory(); });
-  $('#inspect-framing').addEventListener('click', () => { $('#audit').open = true; });
+  for (const id of ['repair-cohort', 'repair-time', 'repair-axis', 'repair-labels']) $(`#${id}`).addEventListener('change', renderStory);
+  $('#reset-story').addEventListener('click', () => { for (const id of ['repair-cohort', 'repair-time', 'repair-axis', 'repair-labels']) $(`#${id}`).checked = false; renderStory(); });
   let resizeTimer;
   addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderWhite(); renderStory(); }, 150); });
 }
@@ -229,7 +250,7 @@ async function init() {
   } catch (error) {
     $('#load-status').hidden = false;
     $('#load-status').classList.add('error');
-    $('#load-status').textContent = `The dataset could not be loaded. Run npm start in the project folder, then open http://127.0.0.1:8002 and reload. ${error.message}`;
+    $('#load-status').textContent = `The dataset could not be loaded. Please reload the page. ${error.message}`;
     console.error(error);
   }
 }
